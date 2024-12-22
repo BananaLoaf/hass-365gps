@@ -1,0 +1,7 @@
+{
+    "name": "365GPS",
+    "content_in_root": false,
+    "zip_release": false,
+    "render_readme": true,
+    "homeassistant": "2025.3.0"
+}

@@ -1,0 +1,12 @@
+{
+    "domain": "365gps",
+    "name": "365gps",
+    "version": "2025.3.0",
+    "config_flow": true,
+    "documentation": "https://github.com/BananaLoaf/hass-365gps",
+    "issue_tracker": "https://github.com/BananaLoaf/hass-365gps/issues",
+    "requirements": [],
+    "dependencies": [],
+    "codeowners": ["@BananaLoaf"],
+    "iot_class": "cloud_polling"
+}
