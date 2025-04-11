@@ -65,10 +65,18 @@ class DeviceData:
         saving[1] = str(int(value))
         return "".join(saving)
 
+    @property
+    def gps(self):
+        return bool(int(self.saving[1]))
+
     def saving_with_lbs(self, value: bool) -> str:
         saving = list(self.saving)
         saving[13] = str(int(value))
         return "".join(saving)
+
+    @property
+    def lbs(self):
+        return bool(int(self.saving[13]))
 
     def saving_with_remote(self, value: bool) -> str:
         saving = list(self.saving)
