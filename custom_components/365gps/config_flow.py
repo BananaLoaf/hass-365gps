@@ -7,6 +7,7 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
 from .coordinator import _365GPSDataUpdateCoordinator
+from .api import _365GPSAPI
 
 
 LOGGER = logging.getLogger(DOMAIN)
@@ -45,12 +46,12 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         password = user_input[CONF_PASSWORD]
 
         try:
-            coordinator = _365GPSDataUpdateCoordinator(
-                hass=self.hass,
+            api = _365GPSAPI(
                 username=username,
                 password=password,
+                hass=self.hass,
             )
-            await coordinator.login()
+            await api.login()
 
         except Exception as e:
             errors["base"] = str(e)

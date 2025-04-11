@@ -23,6 +23,7 @@ from homeassistant.const import (
     DEGREE,
 )
 
+from .api import _365GPSAPI
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LocationSource
 
 
@@ -49,6 +50,8 @@ class DeviceData:
     update_time: datetime
     update_interval: int
 
+    saving: str = "00000000000000000000000000"
+
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
@@ -56,6 +59,25 @@ class DeviceData:
             identifiers={(DOMAIN, self.imei)},
             model=self.device,
         )
+
+    def saving_with_gps(self, value: bool) -> str:
+        saving = list(self.saving)
+        saving[1] = str(int(value))
+        return "".join(saving)
+
+    def saving_with_lbs(self, value: bool) -> str:
+        saving = list(self.saving)
+        saving[13] = str(int(value))
+        return "".join(saving)
+
+    def saving_with_remote(self, value: bool) -> str:
+        saving = list(self.saving)
+        saving[3] = str(int(value))
+        return "".join(saving)
+
+    @property
+    def remote(self):
+        return bool(int(self.saving[3]))
 
 
 class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
@@ -115,66 +137,21 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(
         self,
+        api: _365GPSAPI,
         hass: HomeAssistant,
-        username: str,
-        password: str,
     ):
         super().__init__(
             hass,
             LOGGER,
-            name=f"{DOMAIN}_{username}",
+            name=f"{DOMAIN}_{api.username}",
             update_interval=timedelta(seconds=DATA_UPDATE_INTERVAL),
             update_method=self.get_device_data,
-            setup_method=self.login,
+            setup_method=api.login,
         )
-        self.username = username
-        self.password = password
-        self.is_demo = False
-
-        self._session: aiohttp.ClientSession = async_create_clientsession(
-            hass,
-            verify_ssl=False,
-        )
-
-        self._host = "www.365gps.com"
-
-    async def login(self) -> None:
-        await self._session.get(
-            f"https://{self._host}/login.php?lang=en",
-            timeout=5,
-        )
-
-        login_coro = self._session.post(
-            f"https://{self._host}/npost_login.php",
-            timeout=5,
-            data={
-                "demo": "T" if self.is_demo else "F",
-                "username": self.username,
-                "password": self.password,
-                "form_type": 0,
-            },
-        )
-        async with login_coro as response:
-            response.raise_for_status()
-            content = (await response.content.read()).decode("utf-8-sig")
-            if content[0] != "Y":
-                raise ConfigEntryAuthFailed(content)
-
-    async def get_device_table(self) -> list[dict]:
-        coro = self._session.post(
-            f"https://{self._host}/post_device_table_list.php",
-            timeout=5,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            content = await response.content.read()
-            try:
-                return json.loads(content.decode("utf-8-sig"))["customer_info_list"]
-            except json.decoder.JSONDecodeError as exc:
-                raise IntegrationError(content) from exc
+        self.api = api
 
     async def get_device_data(self) -> dict[str, DeviceData]:
-        raw_devices = await self.get_device_table()
+        raw_devices = await self.api.get_device_table()
         devices = {}
 
         for raw_device in raw_devices:
@@ -227,83 +204,13 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
         return devices
 
-    async def set_update_interval(self, imei: str, value: int):
-        coro = self._session.post(
-            f"https://{self._host}/post_submit_customerupload.php",
-            timeout=5,
-            data={"imei": imei, "sec": value},
-        )
-        async with coro as response:
-            response.raise_for_status()
-            content = await response.content.read()
-            content = content.decode("utf-8-sig")
-            if content != "Y":
-                raise IntegrationError(f"Error setting update interval: {content}")
+    async def _async_update_data(self):
+        data = await super()._async_update_data()
 
-    def sav_with_remote(self, sav: str, remote: bool) -> str:
-        sav = list(sav)
-        sav[3] = str(int(remote))
-        return "".join(sav)
+        for imei, device_data in data.items():
+            device_data.saving = await self.api.get_saving(imei)
 
-    async def get_sav(self, imei: str) -> str:
-        coro = self._session.post(
-            f"https://{self._host}/n365_sav.php?imei={imei}",
-            headers=self.app_api_headers,
-            timeout=5,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                content = self.evaluate_raw_app_api_content(
-                    await response.content.read()
-                )
-            except IntegrationError as exc:
-                raise IntegrationError("Error getting sav") from exc
-
-            return content[0]["saving"]
-
-    async def set_sav(self, imei: str, sav: str):
-        coro = self._session.post(
-            f"https://{self._host}/n365_sav.php?imei={imei}&msg={sav}",
-            headers=self.app_api_headers,
-            timeout=5,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                self.evaluate_raw_app_api_content(
-                    content=await response.content.read(),
-                    check_result_yes=True,
-                )
-            except IntegrationError as exc:
-                raise IntegrationError("Error setting sav") from exc
-
-    async def set_find_status(self, imei: str, status: bool):
-        coro = self._session.post(
-            f"https://{self._host}/n365_find.php?imei={imei}&status={int(status)}&hw=apk",
-            headers=self.app_api_headers,
-            timeout=5,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                self.evaluate_raw_app_api_content(await response.content.read())
-            except IntegrationError as exc:
-                raise IntegrationError("Error setting find status") from exc
-
-    def evaluate_raw_app_api_content(
-        self, content: bytes, check_result_yes: bool = False
-    ) -> dict | list:
-        try:
-            content = json.loads(content.decode("utf-8-sig"))
-        except json.decoder.JSONDecodeError as exc:
-            raise IntegrationError(content) from exc
-
-        if check_result_yes:
-            if content["result"] != "Y":
-                raise IntegrationError(content)
-
-        return content
+        return data
 
 
 class _365GPSEntity:

@@ -16,7 +16,7 @@ async def async_setup_entry(
     entities = []
     for imei in coordinator.data.keys():
         remote_switch = RemoteSwitch(coordinator, imei)
-        remote_switch.sav = await coordinator.get_sav(imei)
+        remote_switch.saving = await coordinator.api.get_saving(imei)
 
         entities.extend(
             [
@@ -40,30 +40,23 @@ class RemoteSwitch(SwitchEntity, _365GPSEntity):
             icon="mdi:sleep",
         )
 
-        self.sav = None
-
-    # @property
-    # def is_on(self) -> bool | None:
-    #     if self.sav is None:
-    #         return self.sav
-    #
-    #     return bool(int(self.sav[3]))
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data[self._imei].remote
 
     async def async_turn_on(self):
-        self.sav = await self.coordinator.get_sav(self._imei)
-        self.sav = self.coordinator.sav_with_remote(sav=self.sav, remote=True)
-        await self.coordinator.set_sav(
-            sav=self.sav,
+        await self.coordinator.api.set_saving(
+            saving=self.coordinator.data[self._imei].saving_with_remote(value=True),
             imei=self._imei,
         )
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
-        self.sav = await self.coordinator.get_sav(self._imei)
-        self.sav = self.coordinator.sav_with_remote(sav=self.sav, remote=False)
-        await self.coordinator.set_sav(
-            sav=self.sav,
+        await self.coordinator.api.set_saving(
+            saving=self.coordinator.data[self._imei].saving_with_remote(value=False),
             imei=self._imei,
         )
+        await self.coordinator.async_request_refresh()
 
 
 class FindSwitch(SwitchEntity, _365GPSEntity):
@@ -79,7 +72,7 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
         )
 
     async def async_turn_on(self):
-        await self.coordinator.set_find_status(self._imei, status=True)
+        await self.coordinator.api.set_find_status(self._imei, status=True)
 
     async def async_turn_off(self):
-        await self.coordinator.set_find_status(self._imei, status=False)
+        await self.coordinator.api.set_find_status(self._imei, status=False)

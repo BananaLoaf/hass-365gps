@@ -4,6 +4,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
 from .coordinator import _365GPSDataUpdateCoordinator
+from .api import _365GPSAPI
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -15,11 +16,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     username = entry.data[CONF_USERNAME]
     password = entry.data[CONF_PASSWORD]
 
-    coordinator = _365GPSDataUpdateCoordinator(
-        hass=hass,
+    api = _365GPSAPI(
         username=username,
         password=password,
+        hass=hass,
     )
+    coordinator = _365GPSDataUpdateCoordinator(api=api, hass=hass)
     await coordinator.async_config_entry_first_refresh()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator

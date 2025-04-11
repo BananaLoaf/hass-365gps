@@ -55,7 +55,7 @@ class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
         )
 
     async def async_press(self):
-        await self.coordinator.set_update_interval(
+        await self.coordinator.api.set_update_interval(
             self._imei,
             value=update_interval_mode_map[self._mode],
         )
