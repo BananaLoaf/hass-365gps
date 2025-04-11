@@ -1,5 +1,4 @@
-from homeassistant.components.switch import SwitchEntity, \
-    SwitchEntityDescription
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -37,12 +36,11 @@ class RemoteSwitch(SwitchEntity, _365GPSEntity):
         self._attr_name = self.coordinator.data[self._imei].name + " Remote"
 
         self.entity_description = SwitchEntityDescription(
-            key='remote',
-            icon='mdi:sleep',
+            key="remote",
+            icon="mdi:sleep",
         )
 
         self.sav = None
-
 
     # @property
     # def is_on(self) -> bool | None:
@@ -76,8 +74,8 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
         self._attr_name = self.coordinator.data[self._imei].name + " Find"
 
         self.entity_description = SwitchEntityDescription(
-            key='find',
-            icon='mdi:bell',
+            key="find",
+            icon="mdi:bell",
         )
 
     async def async_turn_on(self):

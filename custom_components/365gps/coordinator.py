@@ -59,7 +59,11 @@ class DeviceData:
 
 
 class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
-    app_api_headers = {"user-agent": "App", "content-type": "application/json", "Accept": "application/json"}
+    app_api_headers = {
+        "user-agent": "App",
+        "content-type": "application/json",
+        "Accept": "application/json",
+    }
 
     sensor_descriptions = (
         SensorEntityDescription(
@@ -239,7 +243,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
     def sav_with_remote(self, sav: str, remote: bool) -> str:
         sav = list(sav)
         sav[3] = str(int(remote))
-        return ''.join(sav)
+        return "".join(sav)
 
     async def get_sav(self, imei: str) -> str:
         coro = self._session.post(
@@ -250,7 +254,9 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
         async with coro as response:
             response.raise_for_status()
             try:
-                content = self.evaluate_raw_app_api_content(await response.content.read())
+                content = self.evaluate_raw_app_api_content(
+                    await response.content.read()
+                )
             except IntegrationError as exc:
                 raise IntegrationError("Error getting sav") from exc
 
@@ -285,7 +291,9 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             except IntegrationError as exc:
                 raise IntegrationError("Error setting find status") from exc
 
-    def evaluate_raw_app_api_content(self, content: bytes, check_result_yes: bool = False) -> dict | list:
+    def evaluate_raw_app_api_content(
+        self, content: bytes, check_result_yes: bool = False
+    ) -> dict | list:
         try:
             content = json.loads(content.decode("utf-8-sig"))
         except json.decoder.JSONDecodeError as exc:

@@ -1,7 +1,6 @@
 from enum import StrEnum
 
-from homeassistant.components.button import ButtonEntity, \
-    ButtonEntityDescription
+from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -32,7 +31,12 @@ async def async_setup_entry(
 
     entities = []
     for imei in coordinator.data.keys():
-        entities.extend([UpdateIntervalModeButton(mode, coordinator, imei) for mode in list(UpdateIntervalMode)])
+        entities.extend(
+            [
+                UpdateIntervalModeButton(mode, coordinator, imei)
+                for mode in list(UpdateIntervalMode)
+            ]
+        )
 
     async_add_entities(entities, update_before_add=True)
 
@@ -47,7 +51,7 @@ class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
 
         self.entity_description = ButtonEntityDescription(
             key=mode.name,
-            icon='mdi:update',
+            icon="mdi:update",
         )
 
     async def async_press(self):

@@ -35,7 +35,7 @@ class UpdateIntervalNumber(NumberEntity, _365GPSEntity):
             native_max_value=65535,
             native_step=1,
             native_unit_of_measurement=UnitOfTime.SECONDS,
-            icon='mdi:update',
+            icon="mdi:update",
         )
 
     @property
