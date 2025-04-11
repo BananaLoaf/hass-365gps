@@ -20,3 +20,11 @@ Integration for Home Assistant via HACS
 3. Add repository `BananaLoaf/hass-365gps` with type `integration`
 4. Search `365gps` on Home Assistant Community Store
 5. Install
+
+# Adding devices
+
+1. Open Settings
+2. Open Devices & Services
+3. Add Integration
+4. Search `365gps`
+5. Add
