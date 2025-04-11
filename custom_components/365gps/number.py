@@ -32,9 +32,10 @@ class UpdateIntervalNumber(NumberEntity, _365GPSEntity):
             key="update_interval",
             mode=NumberMode.BOX,
             native_min_value=10,
-            native_max_value=7200,
+            native_max_value=65535,
             native_step=1,
             native_unit_of_measurement=UnitOfTime.SECONDS,
+            icon='mdi:update',
         )
 
     @property
