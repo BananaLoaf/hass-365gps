@@ -48,7 +48,6 @@ class DeviceData:
     status: str
     update_time: datetime
     update_interval: int
-    remote: bool
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -60,6 +59,8 @@ class DeviceData:
 
 
 class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
+    app_api_headers = {"user-agent": "App", "content-type": "application/json", "Accept": "application/json"}
+
     sensor_descriptions = (
         SensorEntityDescription(
             key="altitude",
@@ -217,7 +218,6 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 update_interval=update_interval,
                 location_source=source_type,
                 update_time=update_time,
-                remote=False,  # TODO
             )
             LOGGER.debug(devices[imei])
 
@@ -236,37 +236,66 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             if content != "Y":
                 raise IntegrationError(f"Error setting update interval: {content}")
 
-    async def get_mask(self, imei: str) -> list[dict]:
+    def sav_with_remote(self, sav: str, remote: bool) -> str:
+        sav = list(sav)
+        sav[3] = str(int(remote))
+        return ''.join(sav)
+
+    async def get_sav(self, imei: str) -> str:
         coro = self._session.post(
             f"https://{self._host}/n365_sav.php?imei={imei}",
-            headers={"user-agent": "App"},
+            headers=self.app_api_headers,
             timeout=5,
         )
         async with coro as response:
             response.raise_for_status()
-            content = await response.content.read()
             try:
-                return json.loads(content.decode("utf-8-sig"))[0]["saving"]
-            except json.decoder.JSONDecodeError as exc:
-                raise IntegrationError(content) from exc
+                content = self.evaluate_raw_app_api_content(await response.content.read())
+            except IntegrationError as exc:
+                raise IntegrationError("Error getting sav") from exc
 
-    async def set_mask(self, imei: str, mask: str):
+            return content[0]["saving"]
+
+    async def set_sav(self, imei: str, sav: str):
         coro = self._session.post(
-            f"https://{self._host}/n365_sav.php?imei={imei}&msg={mask}",
-            headers={"user-agent": "App"},
+            f"https://{self._host}/n365_sav.php?imei={imei}&msg={sav}",
+            headers=self.app_api_headers,
             timeout=5,
         )
         async with coro as response:
             response.raise_for_status()
-            content = await response.content.read()
-
             try:
-                content = json.loads(content.decode("utf-8-sig"))
-            except json.decoder.JSONDecodeError as exc:
-                raise IntegrationError(content) from exc
+                self.evaluate_raw_app_api_content(
+                    content=await response.content.read(),
+                    check_result_yes=True,
+                )
+            except IntegrationError as exc:
+                raise IntegrationError("Error setting sav") from exc
 
+    async def set_find_status(self, imei: str, status: bool):
+        coro = self._session.post(
+            f"https://{self._host}/n365_find.php?imei={imei}&status={int(status)}&hw=apk",
+            headers=self.app_api_headers,
+            timeout=5,
+        )
+        async with coro as response:
+            response.raise_for_status()
+            try:
+                self.evaluate_raw_app_api_content(await response.content.read())
+            except IntegrationError as exc:
+                raise IntegrationError("Error setting find status") from exc
+
+    def evaluate_raw_app_api_content(self, content: bytes, check_result_yes: bool = False) -> dict | list:
+        try:
+            content = json.loads(content.decode("utf-8-sig"))
+        except json.decoder.JSONDecodeError as exc:
+            raise IntegrationError(content) from exc
+
+        if check_result_yes:
             if content["result"] != "Y":
-                raise IntegrationError(f"Error setting mask: {content}")
+                raise IntegrationError(content)
+
+        return content
 
 
 class _365GPSEntity:
