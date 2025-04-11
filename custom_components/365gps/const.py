@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 DOMAIN = "365gps"
-PLATFORMS = ["device_tracker", "sensor", "number"]
+PLATFORMS = ["device_tracker", "sensor", "number", "button", "switch"]
 DATA_UPDATE_INTERVAL = 10
 
 IS_DEMO_KEY = "Is demo?"
