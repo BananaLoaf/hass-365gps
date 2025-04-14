@@ -51,7 +51,6 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 password=password,
                 hass=self.hass,
             )
-            await api.login()
 
         except Exception as e:
             errors["base"] = str(e)

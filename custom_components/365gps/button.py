@@ -10,15 +10,21 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 
 class UpdateIntervalMode(StrEnum):
-    precision_mode = "Precision Mode"
-    power_saving_mode = "Power Saving Mode"
-    sleep_mode = "Sleep Mode"
+    precision_mode = "Precision Update Interval"
+    power_saving_mode = "Power Saving Update Interval"
+    sleep_mode = "Sleep Update Interval"
 
 
-update_interval_mode_map = {
+update_interval_map = {
     UpdateIntervalMode.precision_mode: 10,
     UpdateIntervalMode.power_saving_mode: 600,
     UpdateIntervalMode.sleep_mode: 65535,
+}
+
+icon_map = {
+    UpdateIntervalMode.precision_mode: "mdi:timer-10",
+    UpdateIntervalMode.power_saving_mode: "mdi:clock-time-two",
+    UpdateIntervalMode.sleep_mode: "mdi:sleep",
 }
 
 
@@ -51,12 +57,12 @@ class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
 
         self.entity_description = ButtonEntityDescription(
             key=mode.name,
-            icon="mdi:update",
+            icon=icon_map[self._mode],
         )
 
     async def async_press(self):
-        await self.coordinator.api.set_update_interval(
-            self._imei,
-            value=update_interval_mode_map[self._mode],
+        await self.coordinator.api.set_utime(
+            imei=self._imei,
+            value=update_interval_map[self._mode],
         )
         await self.coordinator.async_request_refresh()

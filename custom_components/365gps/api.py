@@ -71,93 +71,6 @@ class _365GPSAPI:
             verify_ssl=False,
         )
 
-    async def login(self) -> None:
-        await self._session.get(
-            f"https://{self._host}/login.php?lang=en",
-            timeout=self.timeout,
-        )
-
-        login_coro = self._session.post(
-            f"https://{self._host}/npost_login.php",
-            timeout=self.timeout,
-            data={
-                "demo": "T" if self.is_demo else "F",
-                "username": self.username,
-                "password": self.password,
-                "form_type": 0,
-            },
-        )
-        async with login_coro as response:
-            response.raise_for_status()
-            content = (await response.content.read()).decode("utf-8-sig")
-            if content[0] != "Y":
-                raise ConfigEntryAuthFailed(content)
-
-    async def get_device_table(self) -> list[dict]:
-        coro = self._session.post(
-            f"https://{self._host}/post_device_table_list.php",
-            timeout=self.timeout,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            content = decode_content(await response.content.read())
-            return content["customer_info_list"]
-
-    async def set_update_interval(self, imei: str, value: int):
-        coro = self._session.post(
-            f"https://{self._host}/post_submit_customerupload.php",
-            timeout=self.timeout,
-            data={"imei": imei, "sec": value},
-        )
-        async with coro as response:
-            response.raise_for_status()
-            content = (await response.content.read()).decode("utf-8-sig")
-            if content != "Y":
-                raise IntegrationError(f"Error setting update interval: {content}")
-
-    async def get_saving(self, imei: str) -> str:
-        coro = self._session.post(
-            f"https://{self._host}/n365_sav.php?imei={imei}",
-            headers=self.app_api_headers,
-            timeout=self.timeout,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                content = decode_content(await response.content.read())
-            except IntegrationError as exc:
-                raise IntegrationError("Error getting saving") from exc
-
-            return content[0]["saving"]
-
-    async def set_saving(self, imei: str, saving: str):
-        coro = self._session.post(
-            f"https://{self._host}/n365_sav.php?imei={imei}&msg={saving}",
-            headers=self.app_api_headers,
-            timeout=self.timeout,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                content = decode_content(await response.content.read())
-                if content["result"] != "Y":
-                    raise IntegrationError
-            except IntegrationError as exc:
-                raise IntegrationError("Error setting saving") from exc
-
-    async def set_find_status(self, imei: str, status: bool):
-        coro = self._session.post(
-            f"https://{self._host}/n365_find.php?imei={imei}&status={int(status)}&hw=apk",
-            headers=self.app_api_headers,
-            timeout=self.timeout,
-        )
-        async with coro as response:
-            response.raise_for_status()
-            try:
-                return decode_content(await response.content.read())
-            except IntegrationError as exc:
-                raise IntegrationError("Error setting find status") from exc
-
     @property
     def ak(self) -> str:
         return f"{int(datetime.now(UTC).timestamp() - datetime.fromisoformat('2022-07-16T18:33:20').timestamp()): x}70"
@@ -177,7 +90,7 @@ class _365GPSAPI:
 
     async def shutdown(self, imei: str) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_req.php?imei={imei}&req=49&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php?imei={imei}&req=49&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -190,7 +103,7 @@ class _365GPSAPI:
 
     async def reboot(self, imei: str) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_req.php?imei={imei}&req=48&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php?imei={imei}&req=48&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -203,7 +116,7 @@ class _365GPSAPI:
 
     async def set_led(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_req.php?imei={imei}&req={44 + int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php?imei={imei}&req={44 + int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -214,9 +127,22 @@ class _365GPSAPI:
             except Exception as exc:
                 raise IntegrationError("Error setting LED") from exc
 
+    async def set_speaker(self, imei: str, value: bool) -> ResultType:
+        coro = self._session.post(
+            f"https://{self._host}/api_req.php?imei={imei}&req={50 + int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            headers=self.app_api_headers,
+            timeout=self.timeout,
+        )
+        async with coro as response:
+            response.raise_for_status()
+            try:
+                return decode_content(await response.content.read())
+            except Exception as exc:
+                raise IntegrationError("Error setting speaker") from exc
+
     async def set_find(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_find.php?imei={imei}&status={int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_find.php?imei={imei}&status={int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -229,7 +155,7 @@ class _365GPSAPI:
 
     async def get_sav(self, imei: str) -> list[SavingType]:
         coro = self._session.post(
-            f"https://www.365gps.com/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -261,7 +187,7 @@ class _365GPSAPI:
         saving = "".join(saving)
 
         coro = self._session.post(
-            f"https://www.365gps.com/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -274,7 +200,7 @@ class _365GPSAPI:
 
     async def set_utime(self, imei: str, value: int) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_utime.php?imei={imei}&sec={value}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_utime.php?imei={imei}&sec={value}&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -292,7 +218,7 @@ class _365GPSAPI:
             since = since.strftime("%Y-%m-%d%%20%H:%M:%S")
 
         coro = self._session.post(
-            f"https://www.365gps.com/api_cwt.php?imei={self.username}&ver={self.ver}&app=365g&ak={self.ak}&chat=2&sd={since}",
+            f"https://{self._host}/api_cwt.php?imei={self.username}&ver={self.ver}&app=365g&ak={self.ak}&chat=2&sd={since}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -305,7 +231,7 @@ class _365GPSAPI:
 
     async def clear_notifications(self) -> ResultType:
         coro = self._session.post(
-            f"https://www.365gps.com/api_dalert.php?imei={self.username}&req=2&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_dalert.php?imei={self.username}&req=2&ver={self.ver}&app=365g&ak={self.ak}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )

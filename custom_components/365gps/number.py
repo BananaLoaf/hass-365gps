@@ -47,7 +47,8 @@ class UpdateIntervalNumber(NumberEntity, _365GPSEntity):
         return self.coordinator.data[self._imei].update_interval
 
     async def async_set_native_value(self, value: float) -> None:
-        await self.coordinator.api.set_update_interval(
-            imei=self._imei, value=int(value)
+        await self.coordinator.api.set_utime(
+            imei=self._imei,
+            value=int(value),
         )
         await self.coordinator.async_request_refresh()

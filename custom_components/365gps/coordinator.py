@@ -3,6 +3,8 @@ import logging
 import socket
 from dataclasses import dataclass
 from datetime import timedelta, datetime
+from typing import Optional
+
 import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import (
@@ -35,22 +37,23 @@ class DeviceData:
     name: str
     imei: str
     device: str
+    sw_version: str
+    hw_version: str
 
     latitude: float
     longitude: float
+    update_time: datetime
+    speed: Optional[int]
     altitude: int
     direction: int
-    speed: int
     location_source: LocationSource
 
     battery_level: int
     cellular_signal: int
 
-    status: str
-    update_time: datetime
     update_interval: int
-
-    saving: str = "00000000000000000000000000"
+    led: bool
+    speaker: bool
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -58,34 +61,9 @@ class DeviceData:
             name=self.name,
             identifiers={(DOMAIN, self.imei)},
             model=self.device,
+            sw_version=self.sw_version,
+            hw_version=self.hw_version,
         )
-
-    def saving_with_gps(self, value: bool) -> str:
-        saving = list(self.saving)
-        saving[1] = str(int(value))
-        return "".join(saving)
-
-    @property
-    def gps(self):
-        return bool(int(self.saving[1]))
-
-    def saving_with_lbs(self, value: bool) -> str:
-        saving = list(self.saving)
-        saving[13] = str(int(value))
-        return "".join(saving)
-
-    @property
-    def lbs(self):
-        return bool(int(self.saving[13]))
-
-    def saving_with_remote(self, value: bool) -> str:
-        saving = list(self.saving)
-        saving[3] = str(int(value))
-        return "".join(saving)
-
-    @property
-    def remote(self):
-        return bool(int(self.saving[3]))
 
 
 class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
@@ -97,6 +75,17 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
     sensor_descriptions = (
         SensorEntityDescription(
+            key="update_time",
+            name="Update Time",
+            device_class=SensorDeviceClass.TIMESTAMP,
+        ),
+        SensorEntityDescription(
+            key="speed",
+            name="Speed",
+            device_class=SensorDeviceClass.SPEED,
+            native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
+        ),
+        SensorEntityDescription(
             key="altitude",
             name="Altitude",
             device_class=SensorDeviceClass.DISTANCE,
@@ -107,12 +96,6 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             name="Direction",
             native_unit_of_measurement=DEGREE,
             icon="mdi:compass-rose",
-        ),
-        SensorEntityDescription(
-            key="speed",
-            name="Speed",
-            device_class=SensorDeviceClass.SPEED,
-            native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
         ),
         SensorEntityDescription(
             key="location_source",
@@ -131,16 +114,6 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             name="Cellular Signal",
             icon="mdi:signal",
         ),
-        SensorEntityDescription(
-            key="status",
-            name="Status",
-            device_class=SensorDeviceClass.ENUM,
-        ),
-        SensorEntityDescription(
-            key="update_time",
-            name="Update Time",
-            device_class=SensorDeviceClass.TIMESTAMP,
-        ),
     )
 
     def __init__(
@@ -154,59 +127,69 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             name=f"{DOMAIN}_{api.username}",
             update_interval=timedelta(seconds=DATA_UPDATE_INTERVAL),
             update_method=self.get_device_data,
-            setup_method=api.login,
         )
         self.api = api
 
     async def get_device_data(self) -> dict[str, DeviceData]:
-        raw_devices = await self.api.get_device_table()
+        raw_devices = await self.api.get_ilist()
         devices = {}
 
         for raw_device in raw_devices:
             imei = raw_device["imei"]
             name = raw_device["name"]
             device = raw_device["device"]
-            lat_google = float(raw_device["lat_google"])
-            lng_google = float(raw_device["lng_google"])
-            speed = int(raw_device["speed"])
+            version = raw_device["ver"].split(";")[0]
+
+            lat_google, lng_google = raw_device["google"].split(",")
+            lat_google, lng_google = float(lat_google), float(lng_google)
+            update_time, _, _, _, direction, _, _, altitude = raw_device["gps"].split(
+                ","
+            )
+            update_time = datetime.strptime(
+                update_time + "+00:00", "%Y-%m-%d %H:%M:%S%z"
+            )
+            speed = (
+                int(raw_device["speed"])
+                if raw_device["speed"] is not None
+                else raw_device["speed"]
+            )
+            direction, altitude = int(direction), int(altitude)
+            direction, altitude = (
+                None if direction == 0 else direction,
+                None if altitude == 0 else altitude,
+            )
+            source_type = (
+                LocationSource.LBS
+                if direction is None and altitude is None
+                else LocationSource.GPS
+            )
+
             battery_level = int(raw_device["bat"])
             cellular_signal = int(raw_device["level"])
+
             update_interval = int(raw_device["sec"])
-
-            status = raw_device["online_status"]
-            if "Static" in status:
-                status = "Static"
-            elif "Moving" in status:
-                status = "Moving"
-            elif "Driving" in status:
-                status = "Driving"
-            elif "Offline" in status:
-                status = "Offline"
-
-            update_time = datetime.fromisoformat(raw_device["updatetime"] + "+00:00")
-
-            _, _, _, _, direction, _, _, altitude = raw_device["gps"].split(",")
-            direction = int(direction)
-            altitude = int(altitude)
-
-            is_lbs = direction == 0 and altitude == 0
-            source_type = LocationSource.LBS if is_lbs else LocationSource.GPS
+            _onoff = int(raw_device["onoff"])
+            led = bool((_onoff >> 0) & 1)
+            speaker = bool((_onoff >> 1) & 1)
 
             devices[imei] = DeviceData(
                 name=name,
                 imei=imei,
                 device=device,
+                sw_version=self.api.ver,
+                hw_version=version,
                 latitude=lat_google,
                 longitude=lng_google,
+                update_time=update_time,
+                speed=speed,
                 altitude=altitude,
                 direction=direction,
-                speed=speed,
+                location_source=source_type,
                 battery_level=battery_level,
                 cellular_signal=cellular_signal,
-                status=status,
                 update_interval=update_interval,
-                location_source=source_type,
-                update_time=update_time,
+                led=led,
+                speaker=speaker,
             )
             LOGGER.debug(devices[imei])
 
@@ -215,8 +198,8 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         data = await super()._async_update_data()
 
-        for imei, device_data in data.items():
-            device_data.saving = await self.api.get_saving(imei)
+        # for imei, device_data in data.items():
+        #     device_data.saving = await self.api.get_sav(imei)
 
         return data
 
