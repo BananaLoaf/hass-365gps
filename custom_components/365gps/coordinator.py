@@ -55,6 +55,8 @@ class DeviceData:
     led: bool
     speaker: bool
 
+    sav: str
+
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
@@ -172,6 +174,9 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             led = bool((_onoff >> 0) & 1)
             speaker = bool((_onoff >> 1) & 1)
 
+            sav = await self.api.get_sav(imei)
+            sav = sav[0]["saving"]
+
             devices[imei] = DeviceData(
                 name=name,
                 imei=imei,
@@ -190,6 +195,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 update_interval=update_interval,
                 led=led,
                 speaker=speaker,
+                sav=sav,
             )
             LOGGER.debug(devices[imei])
 

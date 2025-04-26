@@ -20,6 +20,7 @@ async def async_setup_entry(
                 LedSwitch(coordinator, imei),
                 SpeakerSwitch(coordinator, imei),
                 FindSwitch(coordinator, imei),
+                PowerSavingSwitch(coordinator, imei),
             ]
         )
 
@@ -99,3 +100,39 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
 
     async def async_turn_off(self):
         await self.coordinator.api.set_find(self._imei, value=False)
+
+
+class PowerSavingSwitch(SwitchEntity, _365GPSEntity):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._attr_unique_id = f"{self._imei}_power_saving"
+        self._attr_name = self.coordinator.data[self._imei].name + " Power Saving"
+
+        self.entity_description = SwitchEntityDescription(
+            key="power_saving",
+            icon="mdi:power-sleep",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        saving = self.coordinator.data[self._imei].sav
+        return bool(int(saving[15])) and bool(int(saving[21]))
+
+    async def async_turn_on(self):
+        saving = self.coordinator.data[self._imei].sav
+        await self.coordinator.api.set_sav(
+            saving=saving,
+            imei=self._imei,
+            value=True,
+        )
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self):
+        saving = self.coordinator.data[self._imei].sav
+        await self.coordinator.api.set_sav(
+            saving=saving,
+            imei=self._imei,
+            value=False,
+        )
+        await self.coordinator.async_request_refresh()

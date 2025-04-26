@@ -168,15 +168,17 @@ class _365GPSAPI:
 
     async def set_sav(
         self,
+        saving: str,
         imei: str,
-        value: bool,
+        value: Optional[bool] = None,
         on_time: Optional[time] = None,
         off_time: Optional[time] = None,
     ) -> tuple[str, ResultType]:
-        saving = await self.get_sav(imei)
-        saving = list(saving[0]["saving"])
-        saving[15] = str(int(value))
-        saving[21] = str(int(value))
+        saving = list(saving)
+
+        if value is not None:
+            saving[15] = str(int(value))
+            saving[21] = str(int(value))
 
         if on_time is not None:
             saving[16:20] = list(on_time.strftime("%H%M"))
@@ -187,7 +189,7 @@ class _365GPSAPI:
         saving = "".join(saving)
 
         coro = self._session.post(
-            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}&msg={saving}",
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
