@@ -3,15 +3,20 @@ import logging
 import socket
 from dataclasses import dataclass
 from datetime import timedelta, datetime
-from typing import Optional
+from typing import Optional, Type
 
 import aiohttp
+from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.components.device_tracker import TrackerEntityDescription
+from homeassistant.components.number import NumberEntityDescription, NumberMode
+from homeassistant.components.switch import SwitchEntityDescription
+from homeassistant.components.time import TimeEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
     IntegrationError,
 )
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.components.sensor import (
@@ -23,9 +28,10 @@ from homeassistant.const import (
     UnitOfLength,
     UnitOfSpeed,
     DEGREE,
+    UnitOfTime,
 )
 
-from .api import _365GPSAPI
+from .api import _365GPSAPI, Saving
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LocationSource
 
 
@@ -55,7 +61,7 @@ class DeviceData:
     led: bool
     speaker: bool
 
-    sav: str
+    saving: Saving
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -69,12 +75,6 @@ class DeviceData:
 
 
 class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
-    app_api_headers = {
-        "user-agent": "App",
-        "content-type": "application/json",
-        "Accept": "application/json",
-    }
-
     sensor_descriptions = (
         SensorEntityDescription(
             key="update_time",
@@ -116,6 +116,65 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             name="Cellular Signal",
             icon="mdi:signal",
         ),
+    )
+
+    led_descriptions = SwitchEntityDescription(
+        key="led",
+        name="LED",
+    )
+    speaker_description = SwitchEntityDescription(
+        key="speaker",
+        name="Speaker",
+    )
+    find_description = SwitchEntityDescription(
+        key="find",
+        name="Find",
+        icon="mdi:bell",
+    )
+
+    power_saving_description = SwitchEntityDescription(
+        key="power_saving",
+        name="Power Saving",
+        icon="mdi:power-sleep",
+    )
+    on_time_description = TimeEntityDescription(
+        key="power_saving_on_time",
+        name="Power Saving ON Time",
+    )
+    off_time_description = TimeEntityDescription(
+        key="power_saving_off_time",
+        name="Power Saving OFF Time",
+    )
+
+    update_interval_description = NumberEntityDescription(
+        key="update_interval",
+        name="Update Interval",
+        mode=NumberMode.BOX,
+        native_min_value=10,
+        native_max_value=65535,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        icon="mdi:update",
+    )
+    precision_mode_description = ButtonEntityDescription(
+        key="precision_mode",
+        name="Precision Update Interval",
+        icon="mdi:timer-10",
+    )
+    power_saving_mode_description = ButtonEntityDescription(
+        key="power_saving_mode",
+        name="Power Saving Update Interval",
+        icon="mdi:clock-time-two",
+    )
+    sleep_mode_description = ButtonEntityDescription(
+        key="sleep_mode",
+        name="Sleep Update Interval",
+        icon="mdi:sleep",
+    )
+
+    device_tracker_description = TrackerEntityDescription(
+        key="device_tracker",
+        name="Device Tracker",
     )
 
     def __init__(
@@ -174,8 +233,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             led = bool((_onoff >> 0) & 1)
             speaker = bool((_onoff >> 1) & 1)
 
-            sav = await self.api.get_sav(imei)
-            sav = sav[0]["saving"]
+            saving = await self.api.get_sav(imei)
 
             devices[imei] = DeviceData(
                 name=name,
@@ -195,7 +253,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 update_interval=update_interval,
                 led=led,
                 speaker=speaker,
-                sav=sav,
+                saving=Saving(saving[0]["saving"]),
             )
             LOGGER.debug(devices[imei])
 
@@ -211,11 +269,21 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
 
 class _365GPSEntity:
-    def __init__(self, coordinator: _365GPSDataUpdateCoordinator, imei: str):
+    def __init__(
+        self,
+        coordinator: _365GPSDataUpdateCoordinator,
+        imei: str,
+        entity_description: Type[EntityDescription],
+    ):
         self.coordinator = coordinator
         self._imei = imei
+        self.entity_description = entity_description
 
         self._attr_device_info = self.coordinator.data[self._imei].device_info
+        self._attr_unique_id = f"{self._imei}_{self.entity_description.key}"
+        self._attr_name = (
+            self.coordinator.data[self._imei].name + " " + entity_description.name
+        )
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(

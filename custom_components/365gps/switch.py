@@ -1,8 +1,8 @@
-from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .coordinator import _365GPSDataUpdateCoordinator, _365GPSEntity, LOGGER
+from .coordinator import _365GPSDataUpdateCoordinator, _365GPSEntity
 from .const import DOMAIN
 
 
@@ -17,10 +17,12 @@ async def async_setup_entry(
     for imei in coordinator.data.keys():
         entities.extend(
             [
-                LedSwitch(coordinator, imei),
-                SpeakerSwitch(coordinator, imei),
-                FindSwitch(coordinator, imei),
-                PowerSavingSwitch(coordinator, imei),
+                LedSwitch(coordinator, imei, coordinator.led_descriptions),
+                SpeakerSwitch(coordinator, imei, coordinator.speaker_description),
+                FindSwitch(coordinator, imei, coordinator.find_description),
+                PowerSavingSwitch(
+                    coordinator, imei, coordinator.power_saving_description
+                ),
             ]
         )
 
@@ -28,16 +30,6 @@ async def async_setup_entry(
 
 
 class LedSwitch(SwitchEntity, _365GPSEntity):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._attr_unique_id = f"{self._imei}_led"
-        self._attr_name = self.coordinator.data[self._imei].name + " LED"
-
-        self.entity_description = SwitchEntityDescription(
-            key="led",
-        )
-
     @property
     def is_on(self) -> bool:
         return getattr(self.coordinator.data[self._imei], self.entity_description.key)
@@ -56,16 +48,6 @@ class LedSwitch(SwitchEntity, _365GPSEntity):
 
 
 class SpeakerSwitch(SwitchEntity, _365GPSEntity):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._attr_unique_id = f"{self._imei}_speaker"
-        self._attr_name = self.coordinator.data[self._imei].name + " Speaker"
-
-        self.entity_description = SwitchEntityDescription(
-            key="speaker",
-        )
-
     @property
     def is_on(self) -> bool:
         return getattr(self.coordinator.data[self._imei], self.entity_description.key)
@@ -84,17 +66,6 @@ class SpeakerSwitch(SwitchEntity, _365GPSEntity):
 
 
 class FindSwitch(SwitchEntity, _365GPSEntity):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._attr_unique_id = f"{self._imei}_find"
-        self._attr_name = self.coordinator.data[self._imei].name + " Find"
-
-        self.entity_description = SwitchEntityDescription(
-            key="find",
-            icon="mdi:bell",
-        )
-
     async def async_turn_on(self):
         await self.coordinator.api.set_find(self._imei, value=True)
 
@@ -103,36 +74,18 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
 
 
 class PowerSavingSwitch(SwitchEntity, _365GPSEntity):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._attr_unique_id = f"{self._imei}_power_saving"
-        self._attr_name = self.coordinator.data[self._imei].name + " Power Saving"
-
-        self.entity_description = SwitchEntityDescription(
-            key="power_saving",
-            icon="mdi:power-sleep",
-        )
-
     @property
     def is_on(self) -> bool:
-        saving = self.coordinator.data[self._imei].sav
-        return bool(int(saving[15])) and bool(int(saving[21]))
+        return self.coordinator.data[self._imei].saving.is_on
 
     async def async_turn_on(self):
-        saving = self.coordinator.data[self._imei].sav
-        await self.coordinator.api.set_sav(
-            saving=saving,
-            imei=self._imei,
-            value=True,
-        )
+        saving = self.coordinator.data[self._imei].saving
+        saving.is_on = True
+        await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
-        saving = self.coordinator.data[self._imei].sav
-        await self.coordinator.api.set_sav(
-            saving=saving,
-            imei=self._imei,
-            value=False,
-        )
+        saving = self.coordinator.data[self._imei].saving
+        saving.is_on = False
+        await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()

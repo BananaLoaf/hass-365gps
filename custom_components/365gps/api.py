@@ -3,9 +3,7 @@ from datetime import datetime, UTC, time
 from typing import TypedDict, Optional
 
 import aiohttp
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, IntegrationError
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.exceptions import IntegrationError
 
 
 def decode_content(content: bytes) -> dict | list:
@@ -52,6 +50,45 @@ class SavingType(TypedDict):
     log: str
 
 
+class Saving:
+    def __init__(self, value: str):
+        self._value = value
+
+    def __str__(self):
+        return self._value
+
+    @property
+    def is_on(self):
+        return bool(int(self._value[15])) and bool(int(self._value[21]))
+
+    @is_on.setter
+    def is_on(self, value: bool):
+        saving = list(self._value)
+        saving[15] = str(int(value))
+        saving[21] = str(int(value))
+        self._value = "".join(saving)
+
+    @property
+    def power_saving_on_time(self) -> time:
+        return datetime.strptime(self._value[16:20], "%H%M").time()
+
+    @power_saving_on_time.setter
+    def power_saving_on_time(self, value: time):
+        saving = list(self._value)
+        saving[16:20] = list(value.strftime("%H%M"))
+        self._value = "".join(saving)
+
+    @property
+    def power_saving_off_time(self) -> time:
+        return datetime.strptime(self._value[22:26], "%H%M").time()
+
+    @power_saving_off_time.setter
+    def power_saving_off_time(self, value: time):
+        saving = list(self._value)
+        saving[22:26] = list(value.strftime("%H%M"))
+        self._value = "".join(saving)
+
+
 class _365GPSAPI:
     app_api_headers = {
         "User-Agent": "365App",
@@ -60,16 +97,13 @@ class _365GPSAPI:
     ver = "5.76"
     timeout = 5
 
-    def __init__(self, username: str, password: str, hass: HomeAssistant):
+    def __init__(self, username: str, password: str, session: aiohttp.ClientSession):
         self.username = username
         self.password = password
         self.is_demo = False
 
         self._host = "www.365gps.com"
-        self._session: aiohttp.ClientSession = async_create_clientsession(
-            hass,
-            verify_ssl=False,
-        )
+        self._session = session
 
     @property
     def ak(self) -> str:
@@ -166,28 +200,7 @@ class _365GPSAPI:
             except Exception as exc:
                 raise IntegrationError("Error getting sav") from exc
 
-    async def set_sav(
-        self,
-        saving: str,
-        imei: str,
-        value: Optional[bool] = None,
-        on_time: Optional[time] = None,
-        off_time: Optional[time] = None,
-    ) -> tuple[str, ResultType]:
-        saving = list(saving)
-
-        if value is not None:
-            saving[15] = str(int(value))
-            saving[21] = str(int(value))
-
-        if on_time is not None:
-            saving[16:20] = list(on_time.strftime("%H%M"))
-
-        if off_time is not None:
-            saving[22:26] = list(off_time.strftime("%H%M"))
-
-        saving = "".join(saving)
-
+    async def set_sav(self, imei: str, saving: str | Saving) -> tuple[str, ResultType]:
         coro = self._session.post(
             f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}&msg={saving}",
             headers=self.app_api_headers,
