@@ -92,7 +92,8 @@ class Saving:
 class _365GPSAPI:
     app_api_headers = {
         "User-Agent": "365App",
-        "Accept": "gzip",
+        "Connection": "Keep-Alive",
+        "Accept-Encoding": "gzip",
     }
     ver = "5.76"
     timeout = 5
@@ -107,7 +108,7 @@ class _365GPSAPI:
 
     @property
     def ak(self) -> str:
-        return f"{int(datetime.now(UTC).timestamp() - datetime.fromisoformat('2022-07-16T18:33:20').timestamp()): x}70"
+        return f"{int(datetime.now(UTC).timestamp() - datetime.fromisoformat('2022-07-16T19:33:20+00:00').timestamp()):x}70"
 
     async def get_ilist(self) -> list[DeviceInfoType]:
         coro = self._session.post(
