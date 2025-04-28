@@ -52,6 +52,7 @@ class DeviceData:
     speed: Optional[int]
     altitude: int
     direction: int
+    status: str
     location_source: LocationSource
 
     battery_level: int
@@ -98,6 +99,11 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             name="Direction",
             native_unit_of_measurement=DEGREE,
             icon="mdi:compass-rose",
+        ),
+        SensorEntityDescription(
+            key="status",
+            name="Status",
+            device_class=SensorDeviceClass.ENUM,
         ),
         SensorEntityDescription(
             key="location_source",
@@ -171,6 +177,16 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
         name="Sleep Update Interval",
         icon="mdi:sleep",
     )
+    shutdown_description = ButtonEntityDescription(
+        key="shutdown",
+        name="Shutdown",
+        icon="mdi:power",
+    )
+    reboot_description = ButtonEntityDescription(
+        key="reboot",
+        name="Reboot",
+        icon="mdi:autorenew",
+    )
 
     device_tracker_description = TrackerEntityDescription(
         key="device_tracker",
@@ -215,10 +231,11 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 else raw_device["speed"]
             )
             direction, altitude = int(direction), int(altitude)
-            direction, altitude = (
-                None if direction == 0 else direction,
-                None if altitude == 0 else altitude,
-            )
+            if not direction and not altitude:
+                direction, altitude = None, None
+            status = "Offline" if raw_device["log"].startswith("OUT") else "Static"
+            status = "Moving" if speed else status
+
             source_type = (
                 LocationSource.LBS
                 if direction is None and altitude is None
@@ -247,6 +264,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 speed=speed,
                 altitude=altitude,
                 direction=direction,
+                status=status,
                 location_source=source_type,
                 battery_level=battery_level,
                 cellular_signal=cellular_signal,

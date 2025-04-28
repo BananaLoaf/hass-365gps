@@ -34,6 +34,8 @@ async def async_setup_entry(
                 UpdateIntervalModeButton(
                     coordinator, imei, coordinator.sleep_mode_description
                 ),
+                ShutdownButton(coordinator, imei, coordinator.shutdown_description),
+                RebootButton(coordinator, imei, coordinator.reboot_description),
             ]
         )
 
@@ -46,4 +48,16 @@ class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
             imei=self._imei,
             value=update_interval_map[self.entity_description.key],
         )
+        await self.coordinator.async_request_refresh()
+
+
+class ShutdownButton(ButtonEntity, _365GPSEntity):
+    async def async_press(self):
+        await self.coordinator.api.shutdown(self._imei)
+        await self.coordinator.async_request_refresh()
+
+
+class RebootButton(ButtonEntity, _365GPSEntity):
+    async def async_press(self):
+        await self.coordinator.api.reboot(self._imei)
         await self.coordinator.async_request_refresh()

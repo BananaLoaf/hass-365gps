@@ -54,6 +54,7 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     verify_ssl=False,
                 ),
             )
+            await api.get_ilist()
 
         except Exception as e:
             errors["base"] = str(e)
