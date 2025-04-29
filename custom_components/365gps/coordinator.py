@@ -246,7 +246,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             cellular_signal = int(raw_device["level"])
 
             update_interval = int(raw_device["sec"])
-            _onoff = int(raw_device["onoff"])
+            _onoff = int(raw_device["onoff"], base=16)
             led = bool((_onoff >> 0) & 1)
             speaker = bool((_onoff >> 1) & 1)
 
