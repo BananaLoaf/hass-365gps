@@ -1,7 +1,7 @@
 {
     "domain": "365gps",
     "name": "365gps",
-    "version": "2025.4.0-rc4",
+    "version": "2025.4.0-rc5",
     "config_flow": true,
     "documentation": "https://github.com/BananaLoaf/hass-365gps",
     "issue_tracker": "https://github.com/BananaLoaf/hass-365gps/issues",

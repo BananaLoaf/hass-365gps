@@ -58,11 +58,21 @@ class Saving:
         return self._value
 
     @property
-    def is_on(self):
+    def remote(self):
+        return bool(int(self._value[3]))
+
+    @remote.setter
+    def remote(self, value: bool):
+        saving = list(self._value)
+        saving[3] = str(int(value))
+        self._value = "".join(saving)
+
+    @property
+    def power_saving(self):
         return bool(int(self._value[15])) and bool(int(self._value[21]))
 
-    @is_on.setter
-    def is_on(self, value: bool):
+    @power_saving.setter
+    def power_saving(self, value: bool):
         saving = list(self._value)
         saving[15] = str(int(value))
         saving[21] = str(int(value))

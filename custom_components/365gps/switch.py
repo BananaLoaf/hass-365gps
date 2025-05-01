@@ -23,6 +23,7 @@ async def async_setup_entry(
                 PowerSavingSwitch(
                     coordinator, imei, coordinator.power_saving_description
                 ),
+                RemoteSwitch(coordinator, imei, coordinator.remote_description),
             ]
         )
 
@@ -76,16 +77,34 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
 class PowerSavingSwitch(SwitchEntity, _365GPSEntity):
     @property
     def is_on(self) -> bool:
-        return self.coordinator.data[self._imei].saving.is_on
+        return self.coordinator.data[self._imei].saving.power_saving
 
     async def async_turn_on(self):
         saving = self.coordinator.data[self._imei].saving
-        saving.is_on = True
+        saving.power_saving = True
         await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
         saving = self.coordinator.data[self._imei].saving
-        saving.is_on = False
+        saving.power_saving = False
+        await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
+        await self.coordinator.async_request_refresh()
+
+
+class RemoteSwitch(SwitchEntity, _365GPSEntity):
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data[self._imei].saving.remote
+
+    async def async_turn_on(self):
+        saving = self.coordinator.data[self._imei].saving
+        saving.remote = False
+        await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self):
+        saving = self.coordinator.data[self._imei].saving
+        saving.remote = True
         await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()

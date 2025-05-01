@@ -138,6 +138,11 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
         icon="mdi:bell",
     )
 
+    remote_description = SwitchEntityDescription(
+        key="remote",
+        name="Remote",
+        icon="mdi:power-sleep",
+    )
     power_saving_description = SwitchEntityDescription(
         key="power_saving",
         name="Power Saving",
@@ -277,13 +282,9 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
         return devices
 
-    async def _async_update_data(self):
-        data = await super()._async_update_data()
-
-        # for imei, device_data in data.items():
-        #     device_data.saving = await self.api.get_sav(imei)
-
-        return data
+    # async def _async_update_data(self):
+    #     data = await super()._async_update_data()
+    #     return data
 
 
 class _365GPSEntity:
