@@ -59,12 +59,12 @@ class Saving:
 
     @property
     def remote(self):
-        return bool(int(self._value[3]))
+        return not bool(int(self._value[3]))
 
     @remote.setter
     def remote(self, value: bool):
         saving = list(self._value)
-        saving[3] = str(int(value))
+        saving[3] = str(int(not value))
         self._value = "".join(saving)
 
     @property

@@ -99,12 +99,12 @@ class RemoteSwitch(SwitchEntity, _365GPSEntity):
 
     async def async_turn_on(self):
         saving = self.coordinator.data[self._imei].saving
-        saving.remote = False
+        saving.remote = True
         await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
         saving = self.coordinator.data[self._imei].saving
-        saving.remote = True
+        saving.remote = False
         await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()
