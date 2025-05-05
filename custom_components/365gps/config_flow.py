@@ -4,9 +4,10 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .const import DOMAIN
-from .coordinator import _365GPSDataUpdateCoordinator
+from .api import _365GPSAPI
 
 
 LOGGER = logging.getLogger(DOMAIN)
@@ -45,12 +46,15 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         password = user_input[CONF_PASSWORD]
 
         try:
-            coordinator = _365GPSDataUpdateCoordinator(
-                hass=self.hass,
+            api = _365GPSAPI(
                 username=username,
                 password=password,
+                session=async_create_clientsession(
+                    self.hass,
+                    verify_ssl=False,
+                ),
             )
-            await coordinator.login()
+            await api.get_ilist()
 
         except Exception as e:
             errors["base"] = str(e)
