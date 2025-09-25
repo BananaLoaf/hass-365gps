@@ -1,4 +1,5 @@
 import json
+import random
 from datetime import datetime, UTC, time
 from typing import TypedDict, Optional
 
@@ -105,7 +106,7 @@ class _365GPSAPI:
         "Connection": "Keep-Alive",
         "Accept-Encoding": "gzip",
     }
-    ver = "5.76"
+    ver = "6.16"
     timeout = 5
 
     def __init__(self, username: str, password: str, session: aiohttp.ClientSession):
@@ -113,8 +114,11 @@ class _365GPSAPI:
         self.password = password
         self.is_demo = False
 
-        self._host = "www.365gps.com"
         self._session = session
+
+    @property
+    def _host(self):
+        return random.choice(("www.365gps.com", "www.365gps.net", "www.topin.hk"))
 
     @property
     def ak(self) -> str:
