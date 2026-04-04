@@ -136,7 +136,7 @@ class _365GPSAPI:
     async def get_ilist(self) -> list[DeviceInfoType]:
         coro = self._session.post(
             f"https://{self._host}/api_ilist.php",
-            params={**self._common_params, "imei": self.username, "pw": self.password},
+            params=dict(**self._common_params, imei=self.username, pw=self.password),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -150,7 +150,7 @@ class _365GPSAPI:
     async def shutdown(self, imei: str) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_req.php",
-            params={**self._common_params, "imei": imei, "req": "49"},
+            params=dict(**self._common_params, imei=imei, req="49"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -164,7 +164,7 @@ class _365GPSAPI:
     async def reboot(self, imei: str) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_req.php",
-            params={**self._common_params, "imei": imei, "req": "48"},
+            params=dict(**self._common_params, imei=imei, req="48"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -178,7 +178,7 @@ class _365GPSAPI:
     async def set_led(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_req.php",
-            params={**self._common_params, "imei": imei, "req": str(44 + int(value))},
+            params=dict(**self._common_params, imei=imei, req=str(44 + int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -192,7 +192,7 @@ class _365GPSAPI:
     async def set_speaker(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_req.php",
-            params={**self._common_params, "imei": imei, "req": str(50 + int(value))},
+            params=dict(**self._common_params, imei=imei, req=str(50 + int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -206,7 +206,7 @@ class _365GPSAPI:
     async def set_find(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_find.php",
-            params={**self._common_params, "imei": imei, "status": str(int(value))},
+            params=dict(**self._common_params, imei=imei, status=str(int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -220,7 +220,7 @@ class _365GPSAPI:
     async def get_sav(self, imei: str) -> list[SavingType]:
         coro = self._session.post(
             f"https://{self._host}/api_sav.php",
-            params={**self._common_params, "imei": imei},
+            params=dict(**self._common_params, imei=imei),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -234,7 +234,7 @@ class _365GPSAPI:
     async def set_sav(self, imei: str, saving: str | Saving) -> tuple[str, ResultType]:
         coro = self._session.post(
             f"https://{self._host}/api_sav.php",
-            params={**self._common_params, "imei": imei, "msg": str(saving)},
+            params=dict(**self._common_params, imei=imei, msg=str(saving)),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -248,7 +248,7 @@ class _365GPSAPI:
     async def set_utime(self, imei: str, value: int) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_utime.php",
-            params={**self._common_params, "imei": imei, "sec": str(value)},
+            params=dict(**self._common_params, imei=imei, sec=str(value)),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -263,12 +263,7 @@ class _365GPSAPI:
         sd = "null" if since is None else since.strftime("%Y-%m-%d %H:%M:%S")
         coro = self._session.post(
             f"https://{self._host}/api_cwt.php",
-            params={
-                **self._common_params,
-                "imei": self.username,
-                "chat": "2",
-                "sd": sd,
-            },
+            params=dict(**self._common_params, imei=self.username, chat="2", sd=sd),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -282,7 +277,7 @@ class _365GPSAPI:
     async def clear_notifications(self) -> ResultType:
         coro = self._session.post(
             f"https://{self._host}/api_dalert.php",
-            params={**self._common_params, "imei": self.username, "req": "2"},
+            params=dict(**self._common_params, imei=self.username, req="2"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )

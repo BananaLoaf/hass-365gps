@@ -50,7 +50,7 @@ fallback-version = "0.0.0"
 [project.gui-scripts]
 
 [tool.poe.tasks]
-lint-format = "ruff format custom_components/365gps"
-lint-check = "ruff check --fix custom_components/365gps"
+lint-format = "ruff format custom_components/365gps tests/"
+lint-check = "ruff check --fix custom_components/365gps tests/"
 lint = ["lint-format", "lint-check"]
 
