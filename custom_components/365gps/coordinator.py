@@ -1,24 +1,16 @@
-import json
 import logging
-import socket
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from typing import Optional, Type
 
-import aiohttp
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.device_tracker import TrackerEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import (
-    ConfigEntryAuthFailed,
-    IntegrationError,
-)
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
