@@ -25,22 +25,16 @@ dev = [
 
 
 [build-system]
-requires = ["hatchling", "uv-dynamic-versioning"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-source = "uv-dynamic-versioning"
+source = "regex"
+path = "custom_components/365gps/manifest.json"
+pattern = '"version":\s*"(?P<version>[^"]+)"'
 
 [tool.hatch.build]
 include = ["custom_components/365gps"]
-
-
-
-
-[tool.uv-dynamic-versioning]
-style = "semver"
-vcs = "git"
-fallback-version = "0.0.0"
 
 
 
