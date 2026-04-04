@@ -106,7 +106,7 @@ class _365GPSAPI:
         "Connection": "Keep-Alive",
         "Accept-Encoding": "gzip",
     }
-    ver = "6.16"
+    ver = "6.45"
     timeout = 5
 
     def __init__(self, username: str, password: str, session: aiohttp.ClientSession):
@@ -124,9 +124,19 @@ class _365GPSAPI:
     def ak(self) -> str:
         return f"{int(datetime.now(UTC).timestamp() - datetime.fromisoformat('2022-07-16T19:33:20+00:00').timestamp()):x}70"
 
+    @property
+    def _common_params(self) -> dict[str, str]:
+        return {
+            "ver": self.ver,
+            "app": "365g",
+            "ak": self.ak,
+            "hw": "apk",
+        }
+
     async def get_ilist(self) -> list[DeviceInfoType]:
         coro = self._session.post(
-            f"https://{self._host}/api_ilist.php?imei={self.username}&pw={self.password}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_ilist.php",
+            params=dict(**self._common_params, imei=self.username, pw=self.password),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -139,7 +149,8 @@ class _365GPSAPI:
 
     async def shutdown(self, imei: str) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_req.php?imei={imei}&req=49&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php",
+            params=dict(**self._common_params, imei=imei, req="49"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -152,7 +163,8 @@ class _365GPSAPI:
 
     async def reboot(self, imei: str) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_req.php?imei={imei}&req=48&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php",
+            params=dict(**self._common_params, imei=imei, req="48"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -165,7 +177,8 @@ class _365GPSAPI:
 
     async def set_led(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_req.php?imei={imei}&req={44 + int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php",
+            params=dict(**self._common_params, imei=imei, req=str(44 + int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -178,7 +191,8 @@ class _365GPSAPI:
 
     async def set_speaker(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_req.php?imei={imei}&req={50 + int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_req.php",
+            params=dict(**self._common_params, imei=imei, req=str(50 + int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -191,7 +205,8 @@ class _365GPSAPI:
 
     async def set_find(self, imei: str, value: bool) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_find.php?imei={imei}&status={int(value)}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_find.php",
+            params=dict(**self._common_params, imei=imei, status=str(int(value))),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -204,7 +219,8 @@ class _365GPSAPI:
 
     async def get_sav(self, imei: str) -> list[SavingType]:
         coro = self._session.post(
-            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_sav.php",
+            params=dict(**self._common_params, imei=imei),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -217,7 +233,8 @@ class _365GPSAPI:
 
     async def set_sav(self, imei: str, saving: str | Saving) -> tuple[str, ResultType]:
         coro = self._session.post(
-            f"https://{self._host}/api_sav.php?imei={imei}&ver={self.ver}&app=365g&ak={self.ak}&msg={saving}",
+            f"https://{self._host}/api_sav.php",
+            params=dict(**self._common_params, imei=imei, msg=str(saving)),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -230,7 +247,8 @@ class _365GPSAPI:
 
     async def set_utime(self, imei: str, value: int) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_utime.php?imei={imei}&sec={value}&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_utime.php",
+            params=dict(**self._common_params, imei=imei, sec=str(value)),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -242,13 +260,10 @@ class _365GPSAPI:
                 raise IntegrationError("Error setting utime") from exc
 
     async def get_notifications(self, since: Optional[datetime] = None) -> list[None]:
-        if since is None:
-            since = "null"
-        else:
-            since = since.strftime("%Y-%m-%d%%20%H:%M:%S")
-
+        sd = "null" if since is None else since.strftime("%Y-%m-%d %H:%M:%S")
         coro = self._session.post(
-            f"https://{self._host}/api_cwt.php?imei={self.username}&ver={self.ver}&app=365g&ak={self.ak}&chat=2&sd={since}",
+            f"https://{self._host}/api_cwt.php",
+            params=dict(**self._common_params, imei=self.username, chat="2", sd=sd),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )
@@ -261,7 +276,8 @@ class _365GPSAPI:
 
     async def clear_notifications(self) -> ResultType:
         coro = self._session.post(
-            f"https://{self._host}/api_dalert.php?imei={self.username}&req=2&ver={self.ver}&app=365g&ak={self.ak}",
+            f"https://{self._host}/api_dalert.php",
+            params=dict(**self._common_params, imei=self.username, req="2"),
             headers=self.app_api_headers,
             timeout=self.timeout,
         )

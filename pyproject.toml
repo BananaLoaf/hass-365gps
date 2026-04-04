@@ -15,6 +15,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "poethepoet>=0.37.0",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "python-dotenv>=1.2.2",
     "ruff>=0.15.7",
 ]
 
@@ -22,22 +25,16 @@ dev = [
 
 
 [build-system]
-requires = ["hatchling", "uv-dynamic-versioning"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-source = "uv-dynamic-versioning"
+source = "regex"
+path = "custom_components/365gps/manifest.json"
+pattern = '"version":\s*"(?P<version>[^"]+)"'
 
 [tool.hatch.build]
 include = ["custom_components/365gps"]
-
-
-
-
-[tool.uv-dynamic-versioning]
-style = "semver"
-vcs = "git"
-fallback-version = "0.0.0"
 
 
 
@@ -47,7 +44,7 @@ fallback-version = "0.0.0"
 [project.gui-scripts]
 
 [tool.poe.tasks]
-lint-format = "ruff format custom_components/365gps"
-lint-check = "ruff check --fix custom_components/365gps"
+lint-format = "ruff format custom_components/365gps tests/"
+lint-check = "ruff check --fix custom_components/365gps tests/"
 lint = ["lint-format", "lint-check"]
 
