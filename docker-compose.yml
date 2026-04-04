@@ -3,7 +3,8 @@ services:
     container_name: homeassistant
     image: ghcr.io/home-assistant/home-assistant:stable
     volumes:
-      - ./homeassistant_config_volume/:/config
+      - ./homeassistant_config_volume:/config
+      - ./custom_components/365gps:/config/custom_components/365gps:ro
     restart: unless-stopped
     ports:
       - "8123:8123"

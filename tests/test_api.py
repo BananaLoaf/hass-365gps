@@ -86,6 +86,7 @@ class TestSaving:
 
 
 @pytest.mark.asyncio
+@pytest.mark.flaky(reruns=3, reruns_exceptions=(TimeoutError,))
 class TestAPI:
     @pytest.fixture
     def api(self, credentials, session):

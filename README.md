@@ -28,3 +28,43 @@ Integration for Home Assistant via HACS
 3. Add Integration
 4. Search `365gps`
 5. Add
+
+# Development
+
+## Setup
+
+Setup python venv
+```bash
+uv sync
+```
+
+Run Home Assistant instance
+```bash
+docker compose up --build --remove-orphans -d
+```
+
+Restart to apply changes
+```bash
+docker compose restart
+```
+
+## Linting
+
+```bash
+uv run poe lint
+```
+
+## Testing
+
+```bash
+uv run pytest
+```
+
+API integration tests require credentials. Create a `.env` file:
+
+```
+TEST_USERNAME=your_username
+TEST_PASSWORD=your_password
+```
+
+Tests without credentials will be automatically skipped.
