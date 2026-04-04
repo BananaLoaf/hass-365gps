@@ -1,0 +1,16 @@
+name: Python CI
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-ci:
+    uses: BananaLoaf/ci-cd/.github/workflows/python-ci.yml@master
+    with:
+      skip-typecheck: true
+      skip-test: true
+      ruff-path: custom_components/365gps tests/
