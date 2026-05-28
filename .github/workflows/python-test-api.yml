@@ -1,16 +1,23 @@
-name: Python Scheduled API Tests
+name: Python Test API
 
 on:
+  push:
+    branches:
+      - 'master'
   schedule:
     - cron: '30 8 * * 1'
       timezone: "Etc/UTC"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test-api:
+  python-test-api:
     name: test-api
     runs-on: ubuntu-latest
-    environment: python-scheduled-api-tests
+    environment: python-test-api
 
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +35,7 @@ jobs:
       - name: Install the project
         run: uv sync --all-extras
 
-      - name: Test
+      - name: Test API
         env:
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
