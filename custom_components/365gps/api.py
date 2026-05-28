@@ -106,7 +106,7 @@ class _365GPSAPI:
         "Connection": "Keep-Alive",
         "Accept-Encoding": "gzip",
     }
-    ver = "6.45"
+    ver = "2.0"
     timeout = 5
 
     def __init__(self, username: str, password: str, session: aiohttp.ClientSession):
@@ -128,14 +128,14 @@ class _365GPSAPI:
     def _common_params(self) -> dict[str, str]:
         return {
             "ver": self.ver,
-            "app": "365g",
+            "app": "wx",
             "ak": self.ak,
-            "hw": "apk",
+            "hw": "web",
         }
 
     async def get_ilist(self) -> list[DeviceInfoType]:
         coro = self._session.post(
-            f"https://{self._host}/api_ilist.php",
+            f"https://{self._host}/wx_ilist.php",
             params=dict(**self._common_params, imei=self.username, pw=self.password),
             headers=self.app_api_headers,
             timeout=self.timeout,
@@ -219,7 +219,7 @@ class _365GPSAPI:
 
     async def get_sav(self, imei: str) -> list[SavingType]:
         coro = self._session.post(
-            f"https://{self._host}/api_sav.php",
+            f"https://{self._host}/wx_sav.php",
             params=dict(**self._common_params, imei=imei),
             headers=self.app_api_headers,
             timeout=self.timeout,
@@ -262,7 +262,7 @@ class _365GPSAPI:
     async def get_notifications(self, since: Optional[datetime] = None) -> list[None]:
         sd = "null" if since is None else since.strftime("%Y-%m-%d %H:%M:%S")
         coro = self._session.post(
-            f"https://{self._host}/api_cwt.php",
+            f"https://{self._host}/wx_cwt.php",
             params=dict(**self._common_params, imei=self.username, chat="2", sd=sd),
             headers=self.app_api_headers,
             timeout=self.timeout,

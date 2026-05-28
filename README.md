@@ -6,6 +6,9 @@
 
 # 365GPS for HomeAssistant
 
+![Python CI](https://github.com/BananaLoaf/hass-365gps/actions/workflows/python-ci.yml/badge.svg)
+![Python Scheduled API Tests](https://github.com/BananaLoaf/hass-365gps/actions/workflows/python-scheduled-api-tests.yml/badge.svg)
+
 > [!WARNING]  
 > **Do not share your IMEIs and passwords with anyone you don't trust!**
 
