@@ -1,24 +1,32 @@
+from typing import TYPE_CHECKING
+
 from homeassistant.components.device_tracker.config_entry import TrackerEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, LocationSource
-from .coordinator import _365GPSDataUpdateCoordinator, _365GPSEntity
+from .coordinator import _365GPSEntity
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from .coordinator import _365GPSDataUpdateCoordinator
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: _365GPSDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
             GPSDeviceTracker(coordinator, imei, coordinator.device_tracker_description)
             for imei in coordinator.data.keys()
-        ]
+        ],
     )
 
 
-class GPSDeviceTracker(_365GPSEntity, TrackerEntity):
+class GPSDeviceTracker(TrackerEntity, _365GPSEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._attr_name = self.coordinator.data[self._imei].name

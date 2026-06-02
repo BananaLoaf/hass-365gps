@@ -55,3 +55,8 @@ lint-format = "ruff format custom_components/365gps tests/"
 lint-check = "ruff check --fix custom_components/365gps tests/"
 lint = ["lint-format", "lint-check"]
 
+[tool.ruff.format]
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = true

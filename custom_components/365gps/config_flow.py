@@ -32,7 +32,7 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_USERNAME): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
                 # vol.Optional(IS_DEMO_KEY, default=False): cv.boolean,
-            }
+            },
         )
         return self.async_show_form(
             step_id="user",

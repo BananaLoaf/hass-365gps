@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from homeassistant.components.button import ButtonEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .coordinator import _365GPSDataUpdateCoordinator, _365GPSEntity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from .coordinator import _365GPSEntity, LOGGER
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from .coordinator import _365GPSDataUpdateCoordinator
 
 
 update_interval_map = {
@@ -26,17 +33,31 @@ async def async_setup_entry(
         entities.extend(
             [
                 UpdateIntervalModeButton(
-                    coordinator, imei, coordinator.precision_mode_description
+                    coordinator,
+                    imei,
+                    coordinator.precision_mode_description,
                 ),
                 UpdateIntervalModeButton(
-                    coordinator, imei, coordinator.power_saving_mode_description
+                    coordinator,
+                    imei,
+                    coordinator.power_saving_mode_description,
                 ),
                 UpdateIntervalModeButton(
-                    coordinator, imei, coordinator.sleep_mode_description
+                    coordinator,
+                    imei,
+                    coordinator.sleep_mode_description,
                 ),
-                ShutdownButton(coordinator, imei, coordinator.shutdown_description),
-                RebootButton(coordinator, imei, coordinator.reboot_description),
-            ]
+                ShutdownButton(
+                    coordinator,
+                    imei,
+                    coordinator.shutdown_description,
+                ),
+                RebootButton(
+                    coordinator,
+                    imei,
+                    coordinator.reboot_description,
+                ),
+            ],
         )
 
     async_add_entities(entities, update_before_add=True)
@@ -44,20 +65,25 @@ async def async_setup_entry(
 
 class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
     async def async_press(self):
+        value = update_interval_map[self.entity_description.key]
+        LOGGER.debug(f"[{self._imei}] Setting {self.entity_description.key}")
+        LOGGER.debug(f"[{self._imei}] Setting update_interval to {value}")
         await self.coordinator.api.set_utime(
             imei=self._imei,
-            value=update_interval_map[self.entity_description.key],
+            value=value,
         )
         await self.coordinator.async_request_refresh()
 
 
 class ShutdownButton(ButtonEntity, _365GPSEntity):
     async def async_press(self):
+        LOGGER.debug(f"[{self._imei}] Shutting down")
         await self.coordinator.api.shutdown(self._imei)
         await self.coordinator.async_request_refresh()
 
 
 class RebootButton(ButtonEntity, _365GPSEntity):
     async def async_press(self):
+        LOGGER.debug(f"[{self._imei}] Rebooting")
         await self.coordinator.api.reboot(self._imei)
         await self.coordinator.async_request_refresh()
