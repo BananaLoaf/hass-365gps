@@ -11,12 +11,15 @@ jobs:
   python-ci:
     uses: BananaLoaf/ci-cd/.github/workflows/python-ci.yml@master
     with:
+      ruff-check-options: custom_components/365gps tests/
+      ruff-format-options: custom_components/365gps tests/
       skip-typecheck: true
-      skip-test: true
-      ruff-path: custom_components/365gps tests/
+      pytest-options: -v
 
   python-build:
     uses: BananaLoaf/ci-cd/.github/workflows/python-build.yml@master
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.base_ref == 'master' || github.base_ref == 'main'
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.base_ref == 'master'
     name: python-build
     needs: python-ci
+    with:
+      cibuildwheel: false

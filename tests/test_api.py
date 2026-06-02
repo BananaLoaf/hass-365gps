@@ -86,7 +86,7 @@ class TestSaving:
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=3, reruns_exceptions=(TimeoutError,))
+@pytest.mark.flaky(reruns=5, reruns_exceptions=(TimeoutError,))
 class TestAPI:
     @pytest.fixture
     def api(self, credentials, session):
@@ -109,28 +109,22 @@ class TestAPI:
             "login",
             "imei",
             "name",
-            "carno",
             "gps",
             "log",
-            "google",
-            "baidu",
             "speed",
             "bat",
-            "icon",
             "marker",
             "device",
             "ver",
             "sec",
             "level",
             "expdate",
-            "loc",
             "onoff",
-            "gexpdate",
             "iccid",
-            "logo",
-            "ggkey",
             "startdate",
-            "pic",
+            "mot",
+            "carno",
+            "loc",
         ]
         for key in expected_keys:
             assert key in device, f"Missing key: {key}"

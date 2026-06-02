@@ -214,22 +214,22 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
             device = raw_device["device"]
             version = raw_device["ver"].split(";")[0]
 
-            lat_google, lng_google = raw_device["google"].split(",")
-            lat_google, lng_google = float(lat_google), float(lng_google)
-            update_time, _, _, _, direction, _, _, altitude = raw_device["gps"].split(
-                ","
-            )
+            gps_parts = raw_device["gps"].split(",")
+            update_time = gps_parts[0]
+            direction = int(gps_parts[4]) or None
+            lat_google = float(gps_parts[5])
+            lng_google = float(gps_parts[6])
+            altitude = int(gps_parts[7]) or None
+
             update_time = datetime.strptime(
-                update_time + "+00:00", "%Y-%m-%d %H:%M:%S%z"
+                update_time + "+00:00",
+                "%Y-%m-%d %H:%M:%S%z",
             )
             speed = (
                 int(raw_device["speed"])
                 if raw_device["speed"] is not None
                 else raw_device["speed"]
             )
-            direction, altitude = int(direction), int(altitude)
-            if not direction and not altitude:
-                direction, altitude = None, None
             status = "Offline" if raw_device["log"].startswith("OUT") else "Static"
             status = "Moving" if speed else status
 
