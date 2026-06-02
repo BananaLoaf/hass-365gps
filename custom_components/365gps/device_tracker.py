@@ -24,11 +24,21 @@ class GPSDeviceTracker(_365GPSEntity, TrackerEntity):
         self._attr_name = self.coordinator.data[self._imei].name
 
     @property
-    def latitude(self) -> float:
+    def latitude(self) -> float | None:
+        if (
+            self.coordinator.data[self._imei].location_source == LocationSource.LBS
+            and self.coordinator.data[self._imei].ignore_lbs
+        ):
+            return None
         return self.coordinator.data[self._imei].latitude
 
     @property
-    def longitude(self) -> float:
+    def longitude(self) -> float | None:
+        if (
+            self.coordinator.data[self._imei].location_source == LocationSource.LBS
+            and self.coordinator.data[self._imei].ignore_lbs
+        ):
+            return None
         return self.coordinator.data[self._imei].longitude
 
     @property
@@ -42,3 +52,22 @@ class GPSDeviceTracker(_365GPSEntity, TrackerEntity):
     @property
     def location_accuracy(self) -> int:
         return 10 if self.source_type == LocationSource.GPS else 100
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        data = self.coordinator.data[self._imei]
+        return {
+            "update_time": data.update_time,
+            "speed": data.speed,
+            "altitude": data.altitude,
+            "direction": data.direction,
+            "status": data.status,
+            "location_source": data.location_source,
+            "battery_level": data.battery_level,
+            "cellular_signal": data.cellular_signal,
+            "update_interval": data.update_interval,
+            "imei": data.imei,
+            "device": data.device,
+            "sw_version": data.sw_version,
+            "hw_version": data.hw_version,
+        }
