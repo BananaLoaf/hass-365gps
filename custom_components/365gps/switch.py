@@ -24,6 +24,7 @@ async def async_setup_entry(
                     coordinator, imei, coordinator.power_saving_description
                 ),
                 RemoteSwitch(coordinator, imei, coordinator.remote_description),
+                IgnoreLBSSwitch(coordinator, imei, coordinator.ignore_lbs_description),
             ]
         )
 
@@ -108,3 +109,15 @@ class RemoteSwitch(SwitchEntity, _365GPSEntity):
         saving.remote = False
         await self.coordinator.api.set_sav(imei=self._imei, saving=saving)
         await self.coordinator.async_request_refresh()
+
+
+class IgnoreLBSSwitch(SwitchEntity, _365GPSEntity):
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.data[self._imei].ignore_lbs
+
+    async def async_turn_on(self):
+        self.coordinator.data[self._imei].ignore_lbs = True
+
+    async def async_turn_off(self):
+        self.coordinator.data[self._imei].ignore_lbs = False

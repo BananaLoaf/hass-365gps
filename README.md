@@ -33,6 +33,16 @@ Integration for Home Assistant via HACS
 4. Search `365gps`
 5. Add
 
+# Setting log level
+
+In your `configuration.yaml`:
+```yaml
+logger:
+  default: info
+  logs:
+    365gps: debug
+```
+
 # Development
 
 ## Setup

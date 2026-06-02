@@ -46,6 +46,7 @@ class DeviceData:
     direction: int
     status: str
     location_source: LocationSource
+    ignore_lbs: bool
 
     battery_level: int
     cellular_signal: int
@@ -134,6 +135,11 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
         key="remote",
         name="Remote",
         icon="mdi:power-sleep",
+    )
+    ignore_lbs_description = SwitchEntityDescription(
+        key="ignore_lbs",
+        name="Ignore LBS",
+        icon="mdi:crosshairs-gps",
     )
     power_saving_description = SwitchEntityDescription(
         key="power_saving",
@@ -263,6 +269,7 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
                 direction=direction,
                 status=status,
                 location_source=source_type,
+                ignore_lbs=False,
                 battery_level=battery_level,
                 cellular_signal=cellular_signal,
                 update_interval=update_interval,
