@@ -2,34 +2,30 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import timedelta, datetime
-from typing import Optional, Type, TYPE_CHECKING
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Optional, Type
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.device_tracker import TrackerEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
-from homeassistant.helpers.entity import DeviceInfo, EntityDescription
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntityDescription,
-)
 from homeassistant.const import (
+    DEGREE,
     PERCENTAGE,
     UnitOfLength,
     UnitOfSpeed,
-    DEGREE,
     UnitOfTime,
 )
+from homeassistant.helpers.entity import DeviceInfo, EntityDescription
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .api import Saving
+from .api import _365GPSAPI, Saving
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LocationSource
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from .api import _365GPSAPI
 
 
 LOGGER = logging.getLogger(DOMAIN)

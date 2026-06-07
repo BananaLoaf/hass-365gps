@@ -2,13 +2,12 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
-from .const import DOMAIN
 from .api import _365GPSAPI
-
+from .const import DOMAIN
 
 LOGGER = logging.getLogger(DOMAIN)
 
