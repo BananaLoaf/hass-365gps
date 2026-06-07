@@ -1,11 +1,17 @@
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
+from .api import _365GPSAPI
 from .const import DOMAIN, PLATFORMS
 from .coordinator import _365GPSDataUpdateCoordinator
-from .api import _365GPSAPI
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:

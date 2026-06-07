@@ -2,13 +2,12 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
-from .const import DOMAIN
 from .api import _365GPSAPI
-
+from .const import DOMAIN
 
 LOGGER = logging.getLogger(DOMAIN)
 
@@ -32,7 +31,7 @@ class GPSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_USERNAME): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
                 # vol.Optional(IS_DEMO_KEY, default=False): cv.boolean,
-            }
+            },
         )
         return self.async_show_form(
             step_id="user",

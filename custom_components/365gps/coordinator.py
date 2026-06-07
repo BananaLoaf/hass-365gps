@@ -1,30 +1,31 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
-from datetime import timedelta, datetime
-from typing import Optional, Type
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Optional, Type
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.device_tracker import TrackerEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, EntityDescription
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntityDescription,
-)
 from homeassistant.const import (
+    DEGREE,
     PERCENTAGE,
     UnitOfLength,
     UnitOfSpeed,
-    DEGREE,
     UnitOfTime,
 )
+from homeassistant.helpers.entity import DeviceInfo, EntityDescription
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .api import _365GPSAPI, Saving
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LocationSource
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 LOGGER = logging.getLogger(DOMAIN)
@@ -281,10 +282,6 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
 
         return devices
 
-    # async def _async_update_data(self):
-    #     data = await super()._async_update_data()
-    #     return data
-
 
 class _365GPSEntity:
     def __init__(
@@ -305,5 +302,5 @@ class _365GPSEntity:
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
+            self.coordinator.async_add_listener(self.async_write_ha_state),
         )
