@@ -6,7 +6,6 @@ import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
-
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 

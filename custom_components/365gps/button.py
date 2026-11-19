@@ -61,10 +61,10 @@ async def async_setup_entry(
             ],
         )
 
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)
 
 
-class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
+class UpdateIntervalModeButton(_365GPSEntity, ButtonEntity):
     async def async_press(self):
         value = update_interval_map[self.entity_description.key]
         LOGGER.debug(f"[{self._imei}] Setting {self.entity_description.key}")
@@ -76,14 +76,14 @@ class UpdateIntervalModeButton(ButtonEntity, _365GPSEntity):
         await self.coordinator.async_request_refresh()
 
 
-class ShutdownButton(ButtonEntity, _365GPSEntity):
+class ShutdownButton(_365GPSEntity, ButtonEntity):
     async def async_press(self):
         LOGGER.debug(f"[{self._imei}] Shutting down")
         await self.coordinator.api.shutdown(self._imei)
         await self.coordinator.async_request_refresh()
 
 
-class RebootButton(ButtonEntity, _365GPSEntity):
+class RebootButton(_365GPSEntity, ButtonEntity):
     async def async_press(self):
         LOGGER.debug(f"[{self._imei}] Rebooting")
         await self.coordinator.api.reboot(self._imei)

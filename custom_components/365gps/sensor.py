@@ -37,7 +37,7 @@ async def async_setup_entry(
     async_add_entities(devices)
 
 
-class _365GPSSensorEntity(SensorEntity, _365GPSEntity):
+class _365GPSSensorEntity(_365GPSEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         return getattr(self.coordinator.data[self._imei], self.entity_description.key)

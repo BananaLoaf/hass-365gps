@@ -19,7 +19,10 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 
 from .api import _365GPSAPI, Saving
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LocationSource
@@ -283,14 +286,14 @@ class _365GPSDataUpdateCoordinator(DataUpdateCoordinator):
         return devices
 
 
-class _365GPSEntity:
+class _365GPSEntity(CoordinatorEntity):
     def __init__(
         self,
         coordinator: _365GPSDataUpdateCoordinator,
         imei: str,
         entity_description: Type[EntityDescription],
     ):
-        self.coordinator = coordinator
+        super().__init__(coordinator, context=imei)
         self._imei = imei
         self.entity_description = entity_description
 
@@ -298,9 +301,4 @@ class _365GPSEntity:
         self._attr_unique_id = f"{self._imei}_{self.entity_description.key}"
         self._attr_name = (
             self.coordinator.data[self._imei].name + " " + entity_description.name
-        )
-
-    async def async_added_to_hass(self) -> None:
-        self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state),
         )
