@@ -52,7 +52,7 @@ testpaths = ["tests"]
 
 [tool.poe.tasks]
 lint-format = "ruff format custom_components/365gps tests/"
-lint-check = "ruff check --fix custom_components/365gps tests/"
+lint-check = "ruff check --fix --extend-select I custom_components/365gps tests/"
 isort = "isort custom_components/"
 lint = ["lint-format", "lint-check"]
 
