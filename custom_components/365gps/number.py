@@ -30,11 +30,10 @@ async def async_setup_entry(
             )
             for imei in coordinator.data.keys()
         ],
-        update_before_add=True,
     )
 
 
-class UpdateIntervalNumber(NumberEntity, _365GPSEntity):
+class UpdateIntervalNumber(_365GPSEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         return self.coordinator.data[self._imei].update_interval

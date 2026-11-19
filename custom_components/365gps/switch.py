@@ -59,10 +59,10 @@ async def async_setup_entry(
             ],
         )
 
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)
 
 
-class LedSwitch(SwitchEntity, _365GPSEntity):
+class LedSwitch(_365GPSEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         return getattr(self.coordinator.data[self._imei], self.entity_description.key)
@@ -82,7 +82,7 @@ class LedSwitch(SwitchEntity, _365GPSEntity):
         await self.coordinator.async_request_refresh()
 
 
-class SpeakerSwitch(SwitchEntity, _365GPSEntity):
+class SpeakerSwitch(_365GPSEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         return getattr(self.coordinator.data[self._imei], self.entity_description.key)
@@ -102,7 +102,7 @@ class SpeakerSwitch(SwitchEntity, _365GPSEntity):
         await self.coordinator.async_request_refresh()
 
 
-class FindSwitch(SwitchEntity, _365GPSEntity):
+class FindSwitch(_365GPSEntity, SwitchEntity):
     async def async_turn_on(self):
         LOGGER.debug(f"Setting {self.entity_description.key} ON")
         await self.coordinator.api.set_find(self._imei, value=True)
@@ -112,7 +112,7 @@ class FindSwitch(SwitchEntity, _365GPSEntity):
         await self.coordinator.api.set_find(self._imei, value=False)
 
 
-class PowerSavingSwitch(SwitchEntity, _365GPSEntity):
+class PowerSavingSwitch(_365GPSEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         return self.coordinator.data[self._imei].saving.power_saving
@@ -132,7 +132,7 @@ class PowerSavingSwitch(SwitchEntity, _365GPSEntity):
         await self.coordinator.async_request_refresh()
 
 
-class RemoteSwitch(SwitchEntity, _365GPSEntity):
+class RemoteSwitch(_365GPSEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         return self.coordinator.data[self._imei].saving.remote
@@ -152,7 +152,7 @@ class RemoteSwitch(SwitchEntity, _365GPSEntity):
         await self.coordinator.async_request_refresh()
 
 
-class IgnoreLBSSwitch(SwitchEntity, _365GPSEntity):
+class IgnoreLBSSwitch(_365GPSEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         return self.coordinator.data[self._imei].ignore_lbs

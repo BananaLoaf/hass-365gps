@@ -1,9 +1,14 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-from homeassistant.components.device_tracker.config_entry import TrackerEntity
+from typing import TYPE_CHECKING
 
 from .const import DOMAIN, LocationSource
 from .coordinator import _365GPSEntity
+
+try:
+    from homeassistant.components.device_tracker import TrackerEntity
+except ImportError:
+    from homeassistant.components.device_tracker.config_entry import TrackerEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -27,7 +32,7 @@ async def async_setup_entry(
     )
 
 
-class GPSDeviceTracker(TrackerEntity, _365GPSEntity):
+class GPSDeviceTracker(_365GPSEntity, TrackerEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._attr_name = self.coordinator.data[self._imei].name
